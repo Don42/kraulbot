@@ -11,8 +11,23 @@ import "fmt"
 import "strings"
 import "github.com/thoj/go-ircevent"
 
+var nickName = "kraulbot"
+var channelName = "#kraulbot"
+
+var miauTags = []string{"miau", "maunz", "mrauw", "meow"}
+
+func containsAny(message string, tags []string) bool {
+	message = strings.ToLower(message)
+	for _, x := range tags {
+		if strings.Contains(message, x) {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
-	con := irc.IRC("kraulbot", "kraulbot")
+	con := irc.IRC(nickName, nickName)
 	err := con.Connect("irc.hackint.eu:6669")
 	if err != nil {
 		fmt.Println("Failed connecting")
@@ -20,18 +35,18 @@ func main() {
 		return
 	}
 	con.AddCallback("001", func(e *irc.Event) {
-		con.Join("#kraulbot")
+		con.Join(channelName)
 	})
 	con.AddCallback("PRIVMSG", func(e *irc.Event) {
 		message := e.Message()
 		fmt.Println(message)
-		if !strings.HasPrefix(message, "kraulbot") {
+		if !strings.HasPrefix(message, nickName) {
 			return
 		}
-		if !strings.Contains(strings.ToLower(message), "miau") {
+		if !containsAny(message, miauTags) {
 			return
 		}
-		con.Privmsg("#kraulbot", fmt.Sprintf("%s *kraul*", e.Nick))
+		con.Action(channelName, fmt.Sprintf("krault %s", e.Nick))
 	})
 	con.Loop()
 }
