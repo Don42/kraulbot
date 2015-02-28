@@ -14,7 +14,7 @@ import "github.com/thoj/go-ircevent"
 var nickName = "kraulbot"
 var channelName = "#kraulbot"
 
-var miauTags = []string{"miau", "maunz", "mrauw", "meow"}
+var miauTags = []string{"miau", "maunz", "mrauw", "meow", "nya", "nyā", "mau"}
 
 func containsAny(message string, tags []string) bool {
 	message = strings.ToLower(message)
@@ -24,6 +24,17 @@ func containsAny(message string, tags []string) bool {
 		}
 	}
 	return false
+}
+
+func handleIRCMessage(e *irc.Event) string {
+	message := e.Message()
+	if !strings.HasPrefix(message, nickName) {
+		return "none"
+	}
+	if !containsAny(message, miauTags) {
+		return "none"
+	}
+	return "kraul"
 }
 
 func main() {
@@ -38,15 +49,13 @@ func main() {
 		con.Join(channelName)
 	})
 	con.AddCallback("PRIVMSG", func(e *irc.Event) {
-		message := e.Message()
-		fmt.Println(message)
-		if !strings.HasPrefix(message, nickName) {
-			return
+		action := handleIRCMessage(e)
+		switch action {
+		case "kraul":
+			con.Action(channelName, fmt.Sprintf("krault %s", e.Nick))
+		default:
+			fmt.Println(e.Message())
 		}
-		if !containsAny(message, miauTags) {
-			return
-		}
-		con.Action(channelName, fmt.Sprintf("krault %s", e.Nick))
 	})
 	con.Loop()
 }
