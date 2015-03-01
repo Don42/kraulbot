@@ -26,19 +26,26 @@ func containsAny(message string, tags []string) bool {
 	return false
 }
 
-func handleIRCMessage(e *irc.Event) string {
+func handleIRCMessage(con *irc.Connection, e *irc.Event) {
 	message := e.Message()
 	if !strings.HasPrefix(message, nickName) {
-		return "none"
+		return
 	}
 	if !containsAny(message, miauTags) {
-		return "none"
+		return
 	}
-	return "kraul"
+	action := "kraul"
+	switch action {
+	case "kraul":
+		con.Action(channelName, fmt.Sprintf("krault %s", e.Nick))
+	default:
+		fmt.Println(e.Message())
+	}
 }
 
 func main() {
 	con := irc.IRC(nickName, nickName)
+	defer con.Disconnect()
 	err := con.Connect("irc.hackint.eu:6669")
 	if err != nil {
 		fmt.Println("Failed connecting")
@@ -49,13 +56,7 @@ func main() {
 		con.Join(channelName)
 	})
 	con.AddCallback("PRIVMSG", func(e *irc.Event) {
-		action := handleIRCMessage(e)
-		switch action {
-		case "kraul":
-			con.Action(channelName, fmt.Sprintf("krault %s", e.Nick))
-		default:
-			fmt.Println(e.Message())
-		}
+		handleIRCMessage(con, e)
 	})
 	con.Loop()
 }
