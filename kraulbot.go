@@ -14,7 +14,7 @@ import "github.com/thoj/go-ircevent"
 var nickName = "kraulbot"
 var channelName = "#kraulbot"
 
-var miauTags = []string{"miau", "maunz", "mrauw", "meow", "nya", "nyā", "mau"}
+var miauTags = []string{"miau", "maunz", "mrauw", "meow", "nya", "nyā", "mau", "mew", "mrew", "mauw"}
 
 func containsAny(message string, tags []string) bool {
 	message = strings.ToLower(message)
