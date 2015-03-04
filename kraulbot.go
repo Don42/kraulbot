@@ -9,7 +9,7 @@ package main
 
 import "fmt"
 import "strings"
-import "github.com/thoj/go-ircevent"
+import "github.com/belak/irc"
 
 var nickName = "kraulbot"
 var channelName = "#kraulbot"
@@ -26,37 +26,36 @@ func containsAny(message string, tags []string) bool {
 	return false
 }
 
-func handleIRCMessage(con *irc.Connection, e *irc.Event) {
-	message := e.Message()
+func handleIRCMessage(con *irc.Client, e *irc.Event) {
+	message := e.Args[1]
 	if !strings.HasPrefix(message, nickName) {
+		fmt.Println("Not addressed to me")
 		return
 	}
 	if !containsAny(message, miauTags) {
+		fmt.Println("No cat")
 		return
 	}
 	action := "kraul"
 	switch action {
 	case "kraul":
-		con.Action(channelName, fmt.Sprintf("krault %s", e.Nick))
+		con.MentionReply(e, "*kraul*")
 	default:
-		fmt.Println(e.Message())
+		fmt.Println(e)
 	}
 }
 
 func main() {
-	con := irc.IRC(nickName, nickName)
-	defer con.Disconnect()
-	err := con.Connect("irc.hackint.eu:6669")
+	handler := irc.NewBasicMux()
+	client := irc.NewClient(irc.HandlerFunc(handler.HandleEvent), nickName, nickName, nickName, "")
+	handler.Event("001", func(c *irc.Client, e *irc.Event) {
+		c.Write("JOIN #kraulbot")
+	})
+	handler.Event("PRIVMSG", handleIRCMessage)
+	err := client.Dial("irc.hackint.org:6667")
 	if err != nil {
 		fmt.Println("Failed connecting")
 		fmt.Println(err)
 		return
 	}
-	con.AddCallback("001", func(e *irc.Event) {
-		con.Join(channelName)
-	})
-	con.AddCallback("PRIVMSG", func(e *irc.Event) {
-		handleIRCMessage(con, e)
-	})
-	con.Loop()
 }
